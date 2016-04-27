@@ -7,12 +7,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Web;
+using System.Web.Hosting;
 using Umbraco.Core;
 using Umbraco.Core.Logging;
 using Umbraco.Core.Models;
 using Umbraco.Core.Models.PublishedContent;
 using Umbraco.Web;
 using Umbraco.Web.Editors;
+using Umbraco.Web.Security;
 
 namespace Lecoati.LeBlender.Extension
 {
@@ -210,25 +212,39 @@ namespace Lecoati.LeBlender.Extension
         /// </summary>
         /// <param name="myId"></param>
         /// <returns></returns>
-        internal static PublishedContentType GetTargetContentType()
+        internal static PublishedContentType GetTargetContentType(int id = 0)
         {
-            if (UmbracoContext.Current.IsFrontEndUmbracoRequest)
+            if (UmbracoContext.Current != null && UmbracoContext.Current.IsFrontEndUmbracoRequest)
             {
                 return GetUmbracoHelper().AssignedContentItem.ContentType;
             }
-            else if (!string.IsNullOrEmpty(HttpContext.Current.Request["doctype"]))
+            else if (HttpContext.Current != null && !string.IsNullOrEmpty(HttpContext.Current.Request["doctype"]))
             {
                 return PublishedContentType.Get(PublishedItemType.Content, HttpContext.Current.Request["doctype"]);
             }
             else
             {
-                int contenId = int.Parse(HttpContext.Current.Request["id"]);
+                int contentId = id;
+                if (contentId == 0)
+                {
+                    contentId = int.Parse(HttpContext.Current.Request["id"]);
+                }
+                else
+                {
+                    // Have to spoof UmbracoContext for property value converters
+                    var dummyHttpContext = new HttpContextWrapper(new HttpContext(new SimpleWorkerRequest("blah.aspx", "", new System.IO.StringWriter())));
+                    UmbracoContext.EnsureContext(
+                    dummyHttpContext,
+                    ApplicationContext.Current,
+                    new WebSecurity(dummyHttpContext, ApplicationContext.Current),
+                    true);  
+                }
                 return (PublishedContentType)ApplicationContext.Current.ApplicationCache.RuntimeCache.GetCacheItem(
-                    "LeBlender_GetTargetContentType_" + contenId,
+                    "LeBlender_GetTargetContentType_" + contentId,
                     () =>
                     {
                         var services = ApplicationContext.Current.Services;
-                        var contentType = PublishedContentType.Get(PublishedItemType.Content, services.ContentService.GetById(contenId).ContentType.Alias);
+                        var contentType = PublishedContentType.Get(PublishedItemType.Content, services.ContentService.GetById(contentId).ContentType.Alias);
                         return contentType;
                     });
             }

@@ -26,13 +26,13 @@ namespace Lecoati.LeBlender.Extension.Models
         [JsonProperty("value")]
         public object Value { get; set; }
 
-        public T GetValue<T>()
+        public T GetValue<T>(int id = 0)
         {
 
             //var targetContentType = Helper.GetTargetContentType();
             var targetDataType = Helper.GetTargetDataTypeDefinition(Guid.Parse(DataTypeGuid));
 
-            var properyType = new PublishedPropertyType(Helper.GetTargetContentType(),
+            var properyType = new PublishedPropertyType(Helper.GetTargetContentType(id),
                 new PropertyType(new DataTypeDefinition(-1, targetDataType.PropertyEditorAlias)
                 {
                     Id = targetDataType.Id

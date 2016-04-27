@@ -33,7 +33,7 @@ namespace Lecoati.LeBlender.Extension.Models
             return property.Value.ToString();
         }
 
-        public T GetValue<T>(string propertyAlias)
+        public T GetValue<T>(string propertyAlias, int id = 0)
         {
             var property = GetProperty(propertyAlias);
 
@@ -50,7 +50,7 @@ namespace Lecoati.LeBlender.Extension.Models
                 }
             }
 
-            return property.GetValue<T>();
+            return property.GetValue<T>(id);
         }
 
         public bool HasProperty(string propertyAlias)
